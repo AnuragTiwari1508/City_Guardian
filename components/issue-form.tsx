@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
-import { ImageIcon, MapPin, AlertCircle } from "lucide-react"
+import { ImageIcon, MapPin, AlertCircle, Loader2 } from "lucide-react"
 
 const ISSUE_CATEGORIES = [
   { value: "air-quality", label: "Air Quality", emoji: "💨" },
@@ -26,16 +26,79 @@ export default function IssueForm() {
     category: "",
     description: "",
     location: "",
+    latitude: null as number | null,
+    longitude: null as number | null,
     severity: "medium",
   })
 
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
+  const [loadingLocation, setLoadingLocation] = useState(false)
+
+  // Get current location
+  const getCurrentLocation = () => {
+    setLoadingLocation(true)
+    
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser")
+      setLoadingLocation(false)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords
+        
+        // Update form with coordinates
+        setFormData(prev => ({ ...prev, latitude, longitude }))
+        
+        // Reverse geocode to get address
+        try {
+          const response = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          )
+          const data = await response.json()
+          const address = data.locality 
+            ? `${data.locality}, ${data.city || data.principalSubdivision}` 
+            : `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`
+          
+          setFormData(prev => ({ ...prev, location: address }))
+        } catch (error) {
+          // If reverse geocoding fails, just show coordinates
+          setFormData(prev => ({ 
+            ...prev, 
+            location: `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}` 
+          }))
+        }
+        
+        setLoadingLocation(false)
+      },
+      (error) => {
+        console.error("Geolocation error:", error)
+        alert(`Unable to get location: ${error.message}. Please enter manually.`)
+        setLoadingLocation(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    )
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log("Submitting issue:", formData)
+    console.log("Coordinates:", { lat: formData.latitude, lng: formData.longitude })
     // Reset form
-    setFormData({ title: "", category: "", description: "", location: "", severity: "medium" })
+    setFormData({ 
+      title: "", 
+      category: "", 
+      description: "", 
+      location: "", 
+      latitude: null,
+      longitude: null,
+      severity: "medium" 
+    })
     setUploadedImages([])
   }
 
@@ -96,10 +159,25 @@ export default function IssueForm() {
               className="flex-1 bg-input border-border/50 text-foreground placeholder:text-foreground/40"
               required
             />
-            <Button type="button" variant="outline" className="border-accent/30 bg-transparent">
-              <MapPin className="w-4 h-4" />
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="border-accent/30 bg-transparent hover:bg-accent/10"
+              onClick={getCurrentLocation}
+              disabled={loadingLocation}
+            >
+              {loadingLocation ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <MapPin className="w-4 h-4" />
+              )}
             </Button>
           </div>
+          {formData.latitude && formData.longitude && (
+            <p className="text-xs text-green-400 mt-1">
+              ✓ Location captured: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
+            </p>
+          )}
         </div>
 
         {/* Severity */}

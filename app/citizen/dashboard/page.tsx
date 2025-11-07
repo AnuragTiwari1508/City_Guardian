@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,12 +25,101 @@ import {
   Clock,
   CheckCircle2,
   Bell,
-  Menu
+  Menu,
+  Loader2
 } from "lucide-react"
+
+// Dynamically import LiveLocationMap to avoid SSR issues with Leaflet
+const LiveLocationMap = dynamic(
+  () => import("@/components/live-location-map"),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="fixed z-50 bg-black border-2 border-green-400/50 rounded-lg shadow-2xl shadow-green-500/30 p-4" style={{ left: '20px', top: '100px' }}>
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+          <span className="text-sm text-gray-400 font-mono">Loading map...</span>
+        </div>
+      </div>
+    )
+  }
+)
 
 export default function CitizenDashboard() {
   const [activeTab, setActiveTab] = useState("feed")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [loadingLocation, setLoadingLocation] = useState(false)
+  const [location, setLocation] = useState("")
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
+  const [showLocationMap, setShowLocationMap] = useState(false)
+
+  // Handle location selection from map
+  const handleLocationSelect = (locationData: { lat: number; lng: number; address: string }) => {
+    setLocation(locationData.address)
+    setCoordinates({ lat: locationData.lat, lng: locationData.lng })
+  }
+
+  // Get current location
+  const getCurrentLocation = () => {
+    setLoadingLocation(true)
+    
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser")
+      setLoadingLocation(false)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords
+        
+        // Store coordinates
+        setCoordinates({ lat: latitude, lng: longitude })
+        
+        // Reverse geocode to get address
+        try {
+          const response = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          )
+          const data = await response.json()
+          const address = data.locality 
+            ? `${data.locality}, ${data.city || data.principalSubdivision}` 
+            : `Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`
+          
+          setLocation(address)
+        } catch (error) {
+          // If reverse geocoding fails, just show coordinates
+          setLocation(`Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`)
+        }
+        
+        setLoadingLocation(false)
+      },
+      (error) => {
+        console.error("Geolocation error:", error)
+        let errorMessage = "Unable to get location. "
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += "Please allow location access in your browser settings."
+            break
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += "Location information is unavailable."
+            break
+          case error.TIMEOUT:
+            errorMessage += "Location request timed out. Please try again."
+            break
+          default:
+            errorMessage += "Please enter location manually."
+        }
+        alert(errorMessage)
+        setLoadingLocation(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    )
+  }
 
   // Mock data for feed posts with actual problem photos
   const feedPosts = [
@@ -118,7 +208,10 @@ export default function CitizenDashboard() {
           </Button>
           <Button 
             variant={activeTab === "complain" ? "default" : "ghost"}
-            onClick={() => setActiveTab("complain")}
+            onClick={() => {
+              setActiveTab("complain")
+              setShowLocationMap(true)
+            }}
             className={activeTab === "complain" ? "bg-green-400 text-black" : "text-green-400 hover:bg-green-400/10"}
           >
             <AlertTriangle className="w-4 h-4 mr-2" />
@@ -149,7 +242,10 @@ export default function CitizenDashboard() {
             </Button>
             <Button 
               variant={activeTab === "complain" ? "default" : "ghost"}
-              onClick={() => setActiveTab("complain")}
+              onClick={() => {
+                setActiveTab("complain")
+                setShowLocationMap(true)
+              }}
               size="sm"
               className={activeTab === "complain" ? "bg-green-400 text-black" : "text-green-400"}
             >
@@ -350,12 +446,29 @@ export default function CitizenDashboard() {
                   <div className="flex gap-3">
                     <Input 
                       placeholder="Enter address or landmark"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
                       className="flex-1 bg-gray-800 border-gray-600 text-white placeholder:text-gray-500"
                     />
-                    <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                      <MapPin className="w-4 h-4" />
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-green-400"
+                      onClick={getCurrentLocation}
+                      disabled={loadingLocation}
+                    >
+                      {loadingLocation ? (
+                        <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <MapPin className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
+                  {coordinates && (
+                    <p className="text-xs text-green-400 mt-2 font-mono">
+                      ✓ Location captured: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
+                    </p>
+                  )}
                 </div>
 
                 {/* Photo Upload */}
@@ -467,6 +580,11 @@ export default function CitizenDashboard() {
                 </Button>
               </div>
             </Card>
+
+            {/* Show Live Location Map when in Complain tab */}
+            {showLocationMap && (
+              <LiveLocationMap onLocationSelect={handleLocationSelect} />
+            )}
           </div>
         )}
       </main>
