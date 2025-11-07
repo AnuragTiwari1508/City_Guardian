@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -9,15 +10,18 @@ import { ChevronLeft, LogIn, Shield, Users, Target } from "lucide-react"
 export default function LoginPortal({ onBack }: { onBack: () => void }) {
   const [userType, setUserType] = useState<"citizen" | "employee" | "office" | "environmental" | null>(null)
   const [credentials, setCredentials] = useState({ email: "", password: "" })
+  const router = useRouter()
 
   const handleLogin = (type: string) => {
-    // Redirect to respective dashboard
+    // Navigate to respective dashboard with proper routing
     if (type === "environmental") {
-      window.location.href = "/environmental"
+      router.push("/environmental")
     } else if (type === "office") {
-      window.location.href = "/control"
-    } else {
-      window.location.href = `/${type}`
+      router.push("/control/dashboard")
+    } else if (type === "employee") {
+      router.push("/employee/dashboard")
+    } else if (type === "citizen") {
+      router.push("/citizen/dashboard")
     }
   }
 
@@ -104,8 +108,10 @@ export default function LoginPortal({ onBack }: { onBack: () => void }) {
                       className={`p-8 rounded-lg border-2 transition-all duration-300 ${role.color} ${role.bg} hover:shadow-lg ${role.glow} group`}
                     >
                       <div className="mb-6">
-                        {typeof Icon === 'function' ? (
-                          <Icon />
+                        {role.id === 'environmental' ? (
+                          <div className="w-8 h-8 flex items-center justify-center text-cyan-400 font-black text-lg">
+                            ⚡
+                          </div>
                         ) : (
                           <Icon className="w-8 h-8 text-green-400 group-hover:animate-pulse" />
                         )}
