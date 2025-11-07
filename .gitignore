@@ -41,3 +41,4 @@ next-env.d.ts
 # package manager lockfiles (keep pnpm-lock.yaml only)
 package-lock.json
 yarn.lock
+node_modules

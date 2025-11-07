@@ -4,8 +4,9 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
-import { ChevronLeft, LogIn, Shield, Users, Target } from "lucide-react"
+import { ArrowLeft, Users, Target, Shield, Eye, EyeOff, Loader2, AlertCircle, ChevronLeft, LogIn } from "lucide-react"
 
 export default function LoginPortal({ onBack }: { onBack: () => void }) {
   const [userType, setUserType] = useState<"citizen" | "employee" | "office" | "environmental" | null>(null)
@@ -41,15 +42,13 @@ export default function LoginPortal({ onBack }: { onBack: () => void }) {
 
         <div className="flex items-center justify-center min-h-screen p-4 relative z-10">
           <div className="max-w-4xl w-full">
-            <button
+            <button 
               onClick={onBack}
               className="mb-8 flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors font-mono"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
               BACK_TO_MAIN
-            </button>
-
-            <Card className="p-12 border-green-500/30 bg-gray-900/80 backdrop-blur-sm">
+            </button>            <Card className="p-12 border-green-500/30 bg-gray-900/80 backdrop-blur-sm">
               <div className="text-center mb-12">
                 <h2 className="text-5xl font-black mb-4 text-green-400 tracking-wider neon-glow">
                   SELECT OPERATIVE CLASS
@@ -199,13 +198,7 @@ export default function LoginPortal({ onBack }: { onBack: () => void }) {
             INITIALIZE_SESSION
           </Button>
 
-          <div className="mt-6 p-4 bg-gray-800/50 rounded border border-gray-700">
-            <p className="text-center text-gray-400 text-xs font-mono mb-2">DEMO_CREDENTIALS</p>
-            <div className="text-center text-green-400 text-xs font-mono">
-              ID: demo@cityguardian.net<br/>
-              CODE: guardian2025
-            </div>
-          </div>
+
         </Card>
       </div>
     </div>

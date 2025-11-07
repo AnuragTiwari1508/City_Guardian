@@ -147,7 +147,6 @@ pnpm start
 ### Login Portal
 - **Role Selection**: Four operative classes
 - **Gaming Authentication**: Mission control login interface
-- **Demo Credentials**: Provided for testing
 
 ## 🎮 Gaming Elements
 
