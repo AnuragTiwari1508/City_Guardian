@@ -1,10 +1,11 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Schema, model, models } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-export interface IUser extends Document {
+export interface User {
+  id: string;
   name: string;
   email: string;
-  password: string;
+  password?: string;
   mobile: string;
   role: 'citizen' | 'employee' | 'admin';
   avatar?: {
@@ -13,10 +14,15 @@ export interface IUser extends Document {
   };
   complaints: mongoose.Types.ObjectId[];
   createdAt: Date;
+}
+
+interface UserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-const userSchema = new mongoose.Schema({
+type UserModel = mongoose.Model<User, {}, UserMethods>;
+
+const userSchema = new Schema<User, UserModel, UserMethods>({
   name: {
     type: String,
     required: true
