@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { MessageCircle, X, Send, Phone, MessageSquare, Paperclip, Image as ImageIcon, Video } from "lucide-react"
+import { MessageCircle, X, Send, Phone, FileText, Paperclip, Image as ImageIcon, Video, File } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -11,7 +11,8 @@ interface Message {
   sender: "user" | "bot"
   timestamp: Date
   fileUrl?: string
-  fileType?: "image" | "video" | "document"
+  fileName?: string
+  fileType?: "image" | "video" | "document" | "pdf" | "other"
 }
 
 export default function FloatingChatbot() {
@@ -36,45 +37,78 @@ export default function FloatingChatbot() {
   }, [messages])
 
   // Bot responses based on keywords
-  const getBotResponse = (userMessage: string): string => {
+  const getBotResponse = (userMessage: string, hasFile?: boolean, fileType?: string): string => {
     const msg = userMessage.toLowerCase()
     
-    if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey")) {
-      return "Hello! Welcome to CityGuardian. How can I assist you today?"
-    }
-    if (msg.includes("environmental") || msg.includes("sensor") || msg.includes("air quality")) {
-      return "You can check real-time environmental data on our /environmental page. Would you like me to help you with anything specific?"
-    }
-    if (msg.includes("report") || msg.includes("issue") || msg.includes("problem")) {
-      return "To report an issue, please visit our citizen dashboard or contact us via WhatsApp for urgent matters."
-    }
-    if (msg.includes("contact") || msg.includes("support") || msg.includes("help")) {
-      return "You can reach us via:\n📱 WhatsApp: Click the button below\n📧 Email: support@cityguardian.com\n📞 Phone: Contact via Twilio"
-    }
-    if (msg.includes("whatsapp")) {
-      return "Click the 'Contact on WhatsApp' button below to chat with us directly!"
-    }
-    if (msg.includes("thank")) {
-      return "You're welcome! Feel free to reach out anytime. 😊"
+    // Handle file uploads
+    if (hasFile) {
+      if (fileType?.startsWith('image')) {
+        return "✅ Image received! Our team will review it and get back to you soon. You can also visit the Citizen Dashboard to track your report."
+      }
+      if (fileType?.startsWith('video')) {
+        return "✅ Video received! We're analyzing the footage. Our team will investigate within 24 hours. Track your report on the Citizen Dashboard."
+      }
+      if (fileType?.includes('pdf') || fileType?.includes('document')) {
+        return "✅ Document received! Our team will review the file and respond accordingly. Check the Citizen Dashboard for updates."
+      }
+      return "✅ File received! We've got your submission. Our team will process it shortly. Visit the Citizen Dashboard to track progress."
     }
     
-    return "I'm here to help! You can ask me about environmental monitoring, reporting issues, or contact our support team via WhatsApp or phone."
+    if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey")) {
+      return "👋 Hello! Welcome to CityGuardian.\n\nI can help you with:\n📊 Environmental monitoring\n📋 Report issues (with photos/videos/documents)\n📞 Contact support\n🌍 Check air quality data\n\nHow can I assist you today?"
+    }
+    if (msg.includes("environmental") || msg.includes("sensor") || msg.includes("air quality") || msg.includes("aqi")) {
+      return "🌍 **Environmental Monitoring**\n\nView real-time data:\n• Air Quality Index (AQI)\n• Temperature & Humidity\n• PM2.5 & PM10 levels\n• Noise pollution\n• Live weather updates\n\n📊 Visit: /environmental page"
+    }
+    if (msg.includes("report") || msg.includes("issue") || msg.includes("problem") || msg.includes("complaint")) {
+      return "📋 **Report an Issue**\n\n1. Go to Citizen Dashboard → Reports\n2. Upload photos/videos/documents\n3. Use current location feature\n4. Our team responds within 24-48 hours\n\nOr attach files right here in chat!"
+    }
+    if (msg.includes("upload") || msg.includes("file") || msg.includes("photo") || msg.includes("document")) {
+      return "📎 **File Upload**\n\nYou can attach:\n• Images (JPG, PNG, GIF)\n• Videos (MP4, MOV, AVI)\n• Documents (PDF, DOC, DOCX)\n• Spreadsheets (XLS, XLSX)\n• Max size: 25MB\n\nClick the 📎 button below to attach!"
+    }
+    if (msg.includes("location")) {
+      return "📍 **Location Feature**\n\nWhen reporting issues:\n• Click 'Use Current Location' in the form\n• We'll automatically capture your GPS coordinates\n• Helps us respond faster and more accurately!\n\nVisit: Citizen Dashboard → Reports"
+    }
+    if (msg.includes("contact") || msg.includes("support") || msg.includes("help")) {
+      return "📞 **Contact Support**\n\n1. **Chat:** Right here! I'm available 24/7\n2. **Call:** Click 'Request Call' button below\n3. **Email:** support@cityguardian.com\n4. **Dashboard:** Visit Citizen Portal\n\nHow can I help you today?"
+    }
+    if (msg.includes("track") || msg.includes("status")) {
+      return "🔍 **Track Your Reports**\n\nTo check complaint status:\n1. Go to Citizen Dashboard\n2. Click 'My Reports'\n3. View real-time updates\n4. Get notifications\n\nAll your submissions are tracked!"
+    }
+    if (msg.includes("thank")) {
+      return "😊 You're welcome! Feel free to reach out anytime.\n\n💬 I'm here 24/7 to help!\n📱 Use the chat for quick questions\n� Or request a call for urgent matters"
+    }
+    
+    return "🤖 **CityGuardian Assistant**\n\nI can help you with:\n\n📸 Upload photos/videos/documents\n📊 Check environmental data\n📋 Report issues with location\n🔍 Track your complaints\n📞 Contact support team\n\nWhat would you like to do?"
   }
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() && !selectedFile) return
 
+    // Determine file type
+    let fileType: "image" | "video" | "document" | "pdf" | "other" | undefined
+    if (selectedFile) {
+      if (selectedFile.type.startsWith('image/')) fileType = 'image'
+      else if (selectedFile.type.startsWith('video/')) fileType = 'video'
+      else if (selectedFile.type.includes('pdf')) fileType = 'pdf'
+      else if (selectedFile.type.includes('document') || selectedFile.type.includes('word') || selectedFile.type.includes('text')) fileType = 'document'
+      else fileType = 'other'
+    }
+
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputValue || (selectedFile ? `Sent ${selectedFile.type.startsWith('image') ? 'an image' : 'a video'}` : ""),
+      text: inputValue || (selectedFile ? `Sent ${fileType === 'image' ? 'an image' : fileType === 'video' ? 'a video' : fileType === 'pdf' ? 'a PDF' : 'a document'}` : ""),
       sender: "user",
       timestamp: new Date(),
       fileUrl: selectedFile ? URL.createObjectURL(selectedFile) : undefined,
-      fileType: selectedFile?.type.startsWith('image') ? 'image' : selectedFile?.type.startsWith('video') ? 'video' : undefined
+      fileName: selectedFile?.name,
+      fileType: fileType
     }
     setMessages(prev => [...prev, userMessage])
     const messageText = inputValue
+    const hadFile = !!selectedFile
+    const uploadedFileType = selectedFile?.type
     setInputValue("")
     setSelectedFile(null)
     setIsTyping(true)
@@ -83,7 +117,7 @@ export default function FloatingChatbot() {
     setTimeout(() => {
       const botResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: getBotResponse(messageText),
+        text: getBotResponse(messageText, hadFile, uploadedFileType),
         sender: "bot",
         timestamp: new Date()
       }
@@ -95,14 +129,9 @@ export default function FloatingChatbot() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Check file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert("File size must be less than 10MB")
-        return
-      }
-      // Check file type
-      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-        alert("Only images and videos are supported")
+      // Check file size (max 25MB)
+      if (file.size > 25 * 1024 * 1024) {
+        alert("File size must be less than 25MB")
         return
       }
       setSelectedFile(file)
@@ -116,23 +145,12 @@ export default function FloatingChatbot() {
     }
   }
 
-  // WhatsApp integration - Opens Twilio WhatsApp bot
-  const openWhatsApp = () => {
-    const phoneNumber = "14155238886" // Twilio WhatsApp Sandbox number
-    const message = encodeURIComponent("join green-tiger")
-    window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank")
-  }
-
-  // Twilio call integration - This will need backend API endpoint
+  // Twilio call integration
   const initiateTwilioCall = async () => {
-    // Ask user for their phone number
     const userPhone = prompt("Enter your phone number with country code (e.g., +11234567890 for USA, +919876543210 for India):")
     
-    if (!userPhone) {
-      return // User cancelled
-    }
+    if (!userPhone) return
 
-    // Validate phone format
     if (!userPhone.startsWith('+')) {
       alert("Please include country code with + sign (e.g., +1 for USA, +91 for India)")
       return
@@ -141,12 +159,8 @@ export default function FloatingChatbot() {
     try {
       const response = await fetch("/api/twilio/call", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          to: userPhone
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: userPhone })
       })
       
       const data = await response.json()
@@ -154,11 +168,11 @@ export default function FloatingChatbot() {
       if (response.ok && data.success) {
         alert("We'll call you shortly! 📞")
       } else {
-        alert(data.message || "Unable to initiate call. Please try WhatsApp instead.")
+        alert(data.message || "Unable to initiate call. Please try again or use chat.")
       }
     } catch (error) {
       console.error("Twilio call error:", error)
-      alert("Error initiating call. Please use WhatsApp or email.")
+      alert("Error initiating call. Please use chat support.")
     }
   }
 
@@ -244,6 +258,12 @@ export default function FloatingChatbot() {
                       className="max-w-full rounded mb-2 border border-green-400/30"
                     />
                   )}
+                  {message.fileUrl && (message.fileType === 'document' || message.fileType === 'pdf' || message.fileType === 'other') && (
+                    <div className="flex items-center gap-2 p-2 bg-black/30 border border-green-400/30 rounded mb-2">
+                      <FileText className="w-5 h-5 text-green-400" />
+                      <span className="text-sm truncate">{message.fileName}</span>
+                    </div>
+                  )}
                   <p className="whitespace-pre-line">{message.text}</p>
                   <span className={`text-xs ${message.sender === "user" ? "text-black/60" : "text-green-400/60"} mt-1 block`}>
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -268,21 +288,14 @@ export default function FloatingChatbot() {
 
           {/* Quick Actions */}
           <div className="border-t-2 border-green-400/50 bg-black p-3">
-            <p className="text-xs text-green-400/70 mb-2 font-mono font-bold">QUICK_CONTACT:</p>
+            <p className="text-xs text-green-400/70 mb-2 font-mono font-bold">QUICK_ACTIONS:</p>
             <div className="flex gap-2">
-              <button
-                onClick={openWhatsApp}
-                className="flex-1 bg-[#25D366] hover:bg-[#20BA5A] text-white px-3 py-2 rounded-lg text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all border border-[#20BA5A]"
-              >
-                <MessageSquare className="w-4 h-4" />
-                WHATSAPP
-              </button>
               <button
                 onClick={initiateTwilioCall}
                 className="flex-1 bg-green-400 hover:bg-green-500 text-black px-3 py-2 rounded-lg text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all border border-green-300"
               >
                 <Phone className="w-4 h-4" />
-                CALL_ME
+                REQUEST_CALL
               </button>
             </div>
           </div>
@@ -293,8 +306,11 @@ export default function FloatingChatbot() {
             {selectedFile && (
               <div className="mb-2 p-2 bg-gray-900 border border-green-400/30 rounded flex items-center justify-between">
                 <div className="flex items-center gap-2 text-green-400 text-sm font-mono">
-                  {selectedFile.type.startsWith('image/') ? <ImageIcon className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+                  {selectedFile.type.startsWith('image/') && <ImageIcon className="w-4 h-4" />}
+                  {selectedFile.type.startsWith('video/') && <Video className="w-4 h-4" />}
+                  {(selectedFile.type.includes('pdf') || selectedFile.type.includes('document') || !selectedFile.type.startsWith('image/') && !selectedFile.type.startsWith('video/')) && <FileText className="w-4 h-4" />}
                   <span className="truncate max-w-[200px]">{selectedFile.name}</span>
+                  <span className="text-xs text-green-400/60">({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
                 </div>
                 <button onClick={() => setSelectedFile(null)} className="text-red-400 hover:text-red-300">
                   <X className="w-4 h-4" />
@@ -306,7 +322,7 @@ export default function FloatingChatbot() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
                 onChange={handleFileSelect}
                 className="hidden"
               />
