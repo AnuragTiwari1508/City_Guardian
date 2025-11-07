@@ -93,31 +93,22 @@ export default function WeatherWidget() {
 
   const getCityName = async (lat: number, lon: number): Promise<string> => {
     try {
-      // Use Nominatim OpenStreetMap reverse geocoding API (free, no API key)
+      // Use BigDataCloud free reverse geocoding API (no key required, no rate limits)
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`,
-        {
-          headers: {
-            'User-Agent': 'CityGuardian-WeatherWidget/1.0'
-          }
-        }
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
       )
       const data = await response.json()
       
-      // Try to get the most relevant location name
-      if (data.address) {
-        return data.address.city || 
-               data.address.town || 
-               data.address.village || 
-               data.address.county || 
-               data.address.state || 
-               data.name || 
-               "Unknown Location"
-      }
-      return "Unknown Location"
+      // Get the most relevant location name
+      return data.city || 
+             data.locality || 
+             data.principalSubdivision || 
+             data.countryName || 
+             "Your Location"
     } catch (error) {
       console.error("Error fetching city name:", error)
-      return "Unknown Location"
+      // Return a friendly fallback instead of "Unknown"
+      return "Your Location"
     }
   }
 
