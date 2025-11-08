@@ -50,7 +50,7 @@ A gaming-themed environmental monitoring platform with Matrix/Cyberpunk aestheti
   <table>
     <tr>
       <td align="center">
-        <img src="d![alt text](<WhatsApp Image 2025-11-08 at 10.12.03_09594631.jpg>)," alt="Main Environmental Sensor Array" width="280" height="200" />
+        <img src="![alt text](<WhatsApp Image 2025-11-08 at 10.12.03_09594631-1.jpg>)" alt="Main Environmental Sensor Array" width="280" height="200" />
         <br><b>Environmental Monitoring Device</b>
         <br><i>Arduino-based sensor array with LCD display</i>
       </td>
