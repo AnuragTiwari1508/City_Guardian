@@ -5,23 +5,57 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { ChevronLeft, LogIn, Shield, Users, Target } from "lucide-react"
+import { ChevronLeft, LogIn, Shield, Users, Target, UserPlus, Loader2, AlertCircle } from "lucide-react"
+import { setSession, getDashboardRoute, type AuthResponse } from "@/lib/auth"
 
 export default function LoginPortal({ onBack }: { onBack: () => void }) {
   const [userType, setUserType] = useState<"citizen" | "employee" | "office" | "environmental" | null>(null)
-  const [credentials, setCredentials] = useState({ email: "", password: "" })
+  const [isSignup, setIsSignup] = useState(false)
+  const [credentials, setCredentials] = useState({ 
+    email: "", 
+    password: "",
+    name: ""
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const router = useRouter()
 
-  const handleLogin = (type: string) => {
-    // Navigate to respective dashboard with proper routing
-    if (type === "environmental") {
-      router.push("/environmental")
-    } else if (type === "office") {
-      router.push("/control/dashboard")
-    } else if (type === "employee") {
-      router.push("/employee/dashboard")
-    } else if (type === "citizen") {
-      router.push("/citizen/dashboard")
+  const handleAuth = async () => {
+    if (!userType) return
+    
+    setError("")
+    setSuccess("")
+    setLoading(true)
+
+    try {
+      const endpoint = isSignup ? '/api/auth/signup' : '/api/auth/login'
+      const payload = isSignup 
+        ? { ...credentials, userType }
+        : { email: credentials.email, password: credentials.password }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const data: AuthResponse = await response.json()
+
+      if (data.success && data.user && data.token) {
+        setSession(data.user, data.token)
+        setSuccess(data.message)
+        
+        setTimeout(() => {
+          router.push(getDashboardRoute(data.user!.userType))
+        }, 500)
+      } else {
+        setError(data.message || 'Authentication failed')
+      }
+    } catch (err) {
+      setError('Network error. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -160,52 +194,116 @@ export default function LoginPortal({ onBack }: { onBack: () => void }) {
         <Card className="p-8 border-green-500/30 bg-gray-900/90 backdrop-blur-sm fade-in-scale">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-green-400 rounded-full mb-4">
-              <Shield className="w-8 h-8 text-black" />
+              {isSignup ? <UserPlus className="w-8 h-8 text-black" /> : <Shield className="w-8 h-8 text-black" />}
             </div>
             <h2 className="text-3xl font-black text-green-400 mb-2 tracking-wider">
-              {userType === "environmental" ? "SENSOR_ACCESS" : `${userType?.toUpperCase()}_LOGIN`}
+              {isSignup ? "CREATE_ACCOUNT" : (userType === "environmental" ? "SENSOR_ACCESS" : `${userType?.toUpperCase()}_LOGIN`)}
             </h2>
-            <p className="text-gray-400 font-mono text-sm">Enter authentication credentials</p>
+            <p className="text-gray-400 font-mono text-sm">
+              {isSignup ? "Register new operative account" : "Enter authentication credentials"}
+            </p>
           </div>
 
+          {/* Error/Success Messages */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <p className="text-red-400 text-xs font-mono">{error}</p>
+            </div>
+          )}
+          
+          {success && (
+            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded">
+              <p className="text-green-400 text-xs font-mono text-center">{success}</p>
+            </div>
+          )}
+
           <div className="space-y-4 mb-6">
+            {isSignup && (
+              <div>
+                <label className="block text-xs font-mono text-gray-400 mb-2">FULL_NAME</label>
+                <Input
+                  type="text"
+                  placeholder="John Doe"
+                  value={credentials.name}
+                  onChange={(e) => setCredentials({ ...credentials, name: e.target.value })}
+                  className="bg-gray-800 border-gray-600 text-green-400 placeholder:text-gray-500 font-mono focus:border-green-400"
+                  disabled={loading}
+                />
+              </div>
+            )}
+            
             <div>
-              <label className="block text-xs font-mono text-gray-400 mb-2">OPERATIVE_ID</label>
+              <label className="block text-xs font-mono text-gray-400 mb-2">
+                {isSignup ? "EMAIL_ADDRESS" : "OPERATIVE_ID"}
+              </label>
               <Input
                 type="email"
                 placeholder="operative@cityguardian.net"
                 value={credentials.email}
                 onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
                 className="bg-gray-800 border-gray-600 text-green-400 placeholder:text-gray-500 font-mono focus:border-green-400"
+                disabled={loading}
               />
             </div>
+            
             <div>
-              <label className="block text-xs font-mono text-gray-400 mb-2">ACCESS_CODE</label>
+              <label className="block text-xs font-mono text-gray-400 mb-2">
+                {isSignup ? "PASSWORD" : "ACCESS_CODE"}
+              </label>
               <Input
                 type="password"
-                placeholder="••••••••••••••••"
+                placeholder={isSignup ? "Min. 6 characters" : "••••••••••••••••"}
                 value={credentials.password}
                 onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                 className="bg-gray-800 border-gray-600 text-green-400 placeholder:text-gray-500 font-mono focus:border-green-400"
+                disabled={loading}
               />
             </div>
           </div>
 
           <Button
-            onClick={() => handleLogin(userType)}
-            className="w-full bg-gradient-to-r from-green-400 to-cyan-400 text-black font-black h-12 hover:from-green-300 hover:to-cyan-300 shadow-lg shadow-green-400/25 font-mono tracking-wide"
+            onClick={handleAuth}
+            disabled={loading || (isSignup && !credentials.name) || !credentials.email || !credentials.password}
+            className="w-full bg-gradient-to-r from-green-400 to-cyan-400 text-black font-black h-12 hover:from-green-300 hover:to-cyan-300 shadow-lg shadow-green-400/25 font-mono tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <LogIn className="w-5 h-5 mr-2" />
-            INITIALIZE_SESSION
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                {isSignup ? "CREATING..." : "AUTHENTICATING..."}
+              </>
+            ) : (
+              <>
+                {isSignup ? <UserPlus className="w-5 h-5 mr-2" /> : <LogIn className="w-5 h-5 mr-2" />}
+                {isSignup ? "CREATE_ACCOUNT" : "INITIALIZE_SESSION"}
+              </>
+            )}
           </Button>
 
-          <div className="mt-6 p-4 bg-gray-800/50 rounded border border-gray-700">
-            <p className="text-center text-gray-400 text-xs font-mono mb-2">DEMO_CREDENTIALS</p>
-            <div className="text-center text-green-400 text-xs font-mono">
-              ID: demo@cityguardian.net<br/>
-              CODE: guardian2025
-            </div>
+          {/* Toggle between Login and Signup */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => {
+                setIsSignup(!isSignup)
+                setError("")
+                setSuccess("")
+              }}
+              className="text-green-400 hover:text-green-300 text-sm font-mono underline transition-colors"
+              disabled={loading}
+            >
+              {isSignup ? "Already have an account? LOGIN" : "Need an account? SIGN_UP"}
+            </button>
           </div>
+
+          {!isSignup && (
+            <div className="mt-6 p-4 bg-gray-800/50 rounded border border-gray-700">
+              <p className="text-center text-gray-400 text-xs font-mono mb-2">DEMO_CREDENTIALS</p>
+              <div className="text-center text-green-400 text-xs font-mono">
+                ID: demo@cityguardian.net<br/>
+                CODE: guardian2025
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </div>
