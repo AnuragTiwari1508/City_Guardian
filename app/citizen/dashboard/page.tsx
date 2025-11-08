@@ -55,6 +55,20 @@ export default function CitizenDashboard() {
   const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null)
   const [showLocationMap, setShowLocationMap] = useState(false)
   const [showInteractiveMap, setShowInteractiveMap] = useState(false)
+  
+  // Complaint form state
+  const [formData, setFormData] = useState({
+    issueType: '',
+    title: '',
+    description: '',
+    phone: '',
+    email: '',
+    priority: ''
+  })
+  const [photos, setPhotos] = useState<File[]>([])
+  const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
 
   // Handle location selection from map
   const handleLocationSelect = (locationData: { lat: number; lng: number; address: string }) => {
@@ -128,6 +142,106 @@ export default function CitizenDashboard() {
         maximumAge: 0
       }
     )
+  }
+
+  // Handle file upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+    
+    const fileArray = Array.from(files)
+    
+    // Limit to 5 photos
+    if (photos.length + fileArray.length > 5) {
+      alert('Maximum 5 photos allowed')
+      return
+    }
+    
+    // Check file sizes (10MB max each)
+    const oversizedFiles = fileArray.filter(file => file.size > 10 * 1024 * 1024)
+    if (oversizedFiles.length > 0) {
+      alert('Each photo must be less than 10MB')
+      return
+    }
+    
+    // Update photos state
+    setPhotos(prev => [...prev, ...fileArray])
+    
+    // Create preview URLs
+    fileArray.forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPhotoPreviewUrls(prev => [...prev, reader.result as string])
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+  // Remove photo
+  const removePhoto = (index: number) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index))
+    setPhotoPreviewUrls(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // Handle form submission
+  const handleComplaintSubmit = async () => {
+    // Validation
+    if (!formData.issueType) {
+      alert('Please select an issue type')
+      return
+    }
+    if (!formData.title.trim()) {
+      alert('Please enter an issue title')
+      return
+    }
+    if (!formData.description.trim()) {
+      alert('Please provide a description')
+      return
+    }
+    if (!location.trim()) {
+      alert('Please enter or select a location')
+      return
+    }
+    if (!formData.phone.trim() && !formData.email.trim()) {
+      alert('Please provide at least one contact method (phone or email)')
+      return
+    }
+    if (!formData.priority) {
+      alert('Please select a priority level')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // Simulate API call - in production, this would upload photos and create complaint
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Success
+      setSubmitSuccess(true)
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setFormData({
+          issueType: '',
+          title: '',
+          description: '',
+          phone: '',
+          email: '',
+          priority: ''
+        })
+        setLocation('')
+        setCoordinates(null)
+        setPhotos([])
+        setPhotoPreviewUrls([])
+        setSubmitSuccess(false)
+        setIsSubmitting(false)
+        setActiveTab('feed') // Switch back to feed
+      }, 3000)
+    } catch (error) {
+      alert('Failed to submit complaint. Please try again.')
+      setIsSubmitting(false)
+    }
   }
 
   // Mock data for feed posts with actual problem photos
@@ -415,7 +529,7 @@ export default function CitizenDashboard() {
                 {/* Issue Type */}
                 <div>
                   <label className="block text-sm font-mono text-gray-300 mb-2">ISSUE TYPE</label>
-                  <Select>
+                  <Select value={formData.issueType} onValueChange={(value) => setFormData({...formData, issueType: value})}>
                     <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
                       <SelectValue placeholder="Select issue category" />
                     </SelectTrigger>
@@ -436,6 +550,8 @@ export default function CitizenDashboard() {
                   <label className="block text-sm font-mono text-gray-300 mb-2">ISSUE TITLE</label>
                   <Input 
                     placeholder="Brief title of the issue"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
                     className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-500"
                   />
                 </div>
@@ -445,6 +561,8 @@ export default function CitizenDashboard() {
                   <label className="block text-sm font-mono text-gray-300 mb-2">DESCRIPTION</label>
                   <Textarea 
                     placeholder="Describe the issue in detail..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
                     className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-500 min-h-[100px]"
                   />
                 </div>
@@ -511,12 +629,40 @@ export default function CitizenDashboard() {
                 {/* Photo Upload */}
                 <div>
                   <label className="block text-sm font-mono text-gray-300 mb-2">PHOTO EVIDENCE</label>
-                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-green-400 transition-colors mb-4">
+                  <label className="block border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-green-400 transition-colors mb-4 cursor-pointer">
                     <Camera className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                     <p className="text-gray-400 mb-2">Click to upload photos</p>
                     <p className="text-xs text-gray-500 font-mono">Maximum 5 photos, 10MB each</p>
-                    <input type="file" multiple accept="image/*" className="hidden" />
-                  </div>
+                    <input 
+                      type="file" 
+                      multiple 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleFileUpload}
+                      disabled={photos.length >= 5}
+                    />
+                  </label>
+                  
+                  {/* Photo Previews */}
+                  {photoPreviewUrls.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      {photoPreviewUrls.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img 
+                            src={url} 
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border border-gray-700"
+                          />
+                          <button
+                            onClick={() => removePhoto(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   
                   {/* Sample Problem Photos for Reference */}
                   <div className="mt-4">
@@ -576,6 +722,8 @@ export default function CitizenDashboard() {
                       </div>
                       <Input 
                         placeholder="Your mobile number"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
                         className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-500 rounded-l-none"
                       />
                     </div>
@@ -588,6 +736,8 @@ export default function CitizenDashboard() {
                       </div>
                       <Input 
                         placeholder="Your email address"
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
                         className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-500 rounded-l-none"
                       />
                     </div>
@@ -597,7 +747,7 @@ export default function CitizenDashboard() {
                 {/* Priority Level */}
                 <div>
                   <label className="block text-sm font-mono text-gray-300 mb-2">PRIORITY LEVEL</label>
-                  <Select>
+                  <Select value={formData.priority} onValueChange={(value) => setFormData({...formData, priority: value})}>
                     <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
@@ -610,10 +760,32 @@ export default function CitizenDashboard() {
                   </Select>
                 </div>
 
+                {/* Success Message */}
+                {submitSuccess && (
+                  <div className="bg-green-500/20 border border-green-400 rounded-lg p-4 text-center">
+                    <CheckCircle2 className="w-12 h-12 text-green-400 mx-auto mb-2" />
+                    <p className="text-green-400 font-bold text-lg">Complaint Submitted Successfully!</p>
+                    <p className="text-gray-400 text-sm mt-1">Redirecting to feed...</p>
+                  </div>
+                )}
+
                 {/* Submit Button */}
-                <Button className="w-full bg-gradient-to-r from-green-400 to-cyan-400 text-black font-black text-lg h-12 hover:from-green-300 hover:to-cyan-300">
-                  <Upload className="w-5 h-5 mr-2" />
-                  SUBMIT COMPLAINT
+                <Button 
+                  onClick={handleComplaintSubmit}
+                  disabled={isSubmitting || submitSuccess}
+                  className="w-full bg-gradient-to-r from-green-400 to-cyan-400 text-black font-black text-lg h-12 hover:from-green-300 hover:to-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      SUBMITTING...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 mr-2" />
+                      SUBMIT COMPLAINT
+                    </>
+                  )}
                 </Button>
               </div>
             </Card>

@@ -3,9 +3,11 @@
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, Bell, User, LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function EmployeeHeader() {
   const router = useRouter()
+  const { user, logout } = useAuth()
 
   return (
     <header className="border-b border-border/30 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
@@ -52,15 +54,27 @@ export default function EmployeeHeader() {
             <span className="absolute top-1 right-1 w-2 h-2 bg-secondary rounded-full" />
           </Button>
 
-          {/* Profile */}
-          <Button variant="ghost" size="sm" className="text-foreground/70 hover:text-foreground">
-            <User className="w-5 h-5" />
-          </Button>
-
-          {/* Logout */}
-          <Button variant="ghost" size="sm" className="text-foreground/70 hover:text-destructive">
-            <LogOut className="w-5 h-5" />
-          </Button>
+          {/* User Profile & Logout */}
+          {user && (
+            <div className="flex items-center gap-2 ml-2 pl-4 border-l border-border/30">
+              <button
+                onClick={() => router.push('/profile')}
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded bg-accent/10 border border-accent/20 hover:bg-accent/20 transition-colors cursor-pointer"
+              >
+                <User className="w-4 h-4 text-accent" />
+                <span className="text-sm font-mono text-foreground">{user.name}</span>
+              </button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={logout}
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </header>
