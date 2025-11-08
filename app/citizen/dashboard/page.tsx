@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import NavigationHeader from "@/components/navigation-header"
+import InteractiveMap from "@/components/interactive-map"
 import { 
   Users, 
   MessageSquare, 
@@ -26,7 +27,8 @@ import {
   CheckCircle2,
   Bell,
   Menu,
-  Loader2
+  Loader2,
+  Map
 } from "lucide-react"
 
 // Dynamically import LiveLocationMap to avoid SSR issues with Leaflet
@@ -50,8 +52,9 @@ export default function CitizenDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [location, setLocation] = useState("")
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
+  const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null)
   const [showLocationMap, setShowLocationMap] = useState(false)
+  const [showInteractiveMap, setShowInteractiveMap] = useState(false)
   
   // Complaint form state
   const [formData, setFormData] = useState({
@@ -70,6 +73,12 @@ export default function CitizenDashboard() {
   // Handle location selection from map
   const handleLocationSelect = (locationData: { lat: number; lng: number; address: string }) => {
     setLocation(locationData.address)
+    setCoordinates({ lat: locationData.lat, lng: locationData.lng })
+  }
+
+  // Handle location selection from interactive map
+  const handleInteractiveMapSelect = (locationData: { lat: number; lng: number; address?: string }) => {
+    setLocation(locationData.address || `${locationData.lat.toFixed(6)}, ${locationData.lng.toFixed(6)}`)
     setCoordinates({ lat: locationData.lat, lng: locationData.lng })
   }
 
@@ -561,32 +570,60 @@ export default function CitizenDashboard() {
                 {/* Location */}
                 <div>
                   <label className="block text-sm font-mono text-gray-300 mb-2">LOCATION</label>
-                  <div className="flex gap-3">
-                    <Input 
-                      placeholder="Enter address or landmark"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      className="flex-1 bg-gray-800 border-gray-600 text-white placeholder:text-gray-500"
-                    />
-                    <Button 
-                      type="button"
-                      variant="outline" 
-                      className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-green-400"
-                      onClick={getCurrentLocation}
-                      disabled={loadingLocation}
-                    >
-                      {loadingLocation ? (
-                        <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <MapPin className="w-4 h-4" />
-                      )}
-                    </Button>
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <Input 
+                        placeholder="Enter address or landmark"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="flex-1 bg-gray-800 border-gray-600 text-white placeholder:text-gray-500"
+                      />
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-green-400"
+                        onClick={getCurrentLocation}
+                        disabled={loadingLocation}
+                        title="Get Current Location"
+                      >
+                        {loadingLocation ? (
+                          <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <MapPin className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-green-400"
+                        onClick={() => setShowInteractiveMap(!showInteractiveMap)}
+                        title="Interactive Map"
+                      >
+                        <Map className="w-4 h-4" />
+                        {showInteractiveMap ? 'Hide' : 'Map'}
+                      </Button>
+                    </div>
+
+                    {/* Interactive Map */}
+                    {showInteractiveMap && (
+                      <div className="border border-gray-600 rounded-lg overflow-hidden">
+                        <InteractiveMap 
+                          onLocationSelect={handleInteractiveMapSelect}
+                          onLocationClear={() => {
+                            setCoordinates(null)
+                            setLocation('')
+                          }}
+                          initialLocation={coordinates ? { lat: coordinates.lat, lng: coordinates.lng, address: location } : undefined}
+                        />
+                      </div>
+                    )}
+
+                    {coordinates && (
+                      <p className="text-xs text-green-400 mt-2 font-mono">
+                        ✓ Location captured: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
+                      </p>
+                    )}
                   </div>
-                  {coordinates && (
-                    <p className="text-xs text-green-400 mt-2 font-mono">
-                      ✓ Location captured: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
-                    </p>
-                  )}
                 </div>
 
                 {/* Photo Upload */}
