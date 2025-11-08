@@ -39,20 +39,58 @@ A gaming-themed environmental monitoring platform with Matrix/Cyberpunk aestheti
 ## 🔧 Hardware Models
 
 > **📸 How to add images**: 
-> 1. **Direct Paste**: Copy your image and paste it directly in the placeholder areas below
+> 1. **Direct Paste**: Copy your image and paste it directly in the gallery area below
 > 2. **Base64 Embed**: Convert your image to base64 and paste in the `src="data:image/jpeg;base64,YOUR_BASE64_HERE"`
 > 3. **GitHub Drag-Drop**: In GitHub editor, simply drag and drop your images in the marked areas
 
-### Environmental Monitoring Device
+### 📷 Hardware Gallery - Complete Device Collection
 
-Our custom-built IoT sensor array designed for real-time environmental data collection:
+<!-- ===== PASTE ALL YOUR HARDWARE IMAGES HERE ===== -->
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="d![alt text](<WhatsApp Image 2025-11-08 at 10.12.03_09594631.jpg>)," alt="Main Environmental Sensor Array" width="280" height="200" />
+        <br><b>Environmental Monitoring Device</b>
+        <br><i>Arduino-based sensor array with LCD display</i>
+      </td>
+      <td align="center">
+        <img src="data:image/jpeg;base64," alt="Compact Monitoring Unit" width="280" height="200" />
+        <br><b>Compact Monitoring Unit</b>
+        <br><i>Portable personal air quality tracker</i>
+      </td>
+      <td align="center">
+        <img src="data:image/jpeg;base64," alt="Network Gateway Device" width="280" height="200" />
+        <br><b>Network Gateway Hub</b>
+        <br><i>Central coordination device</i>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="data:image/jpeg;base64," alt="Sensor Assembly View" width="280" height="200" />
+        <br><b>Sensor Assembly</b>
+        <br><i>Internal component layout</i>
+      </td>
+      <td align="center">
+        <img src="data:image/jpeg;base64," alt="Field Deployment Setup" width="280" height="200" />
+        <br><b>Field Deployment</b>
+        <br><i>Outdoor installation setup</i>
+      </td>
+      <td align="center">
+        <img src="data:image/jpeg;base64," alt="Control Panel Interface" width="280" height="200" />
+        <br><b>Control Panel</b>
+        <br><i>User interface and controls</i>
+      </td>
+    </tr>
+  </table>
+</div>
 
-<!-- Paste your hardware image here directly -->
-<img src="data:image/jpeg;base64," alt="Hardware Model - Environmental Sensor Array" width="600" height="400" />
+<!-- ===== END OF IMAGE GALLERY ===== -->
 
-<!-- Alternative: You can also paste the image directly here using GitHub's drag-and-drop feature -->
+### Device Specifications Overview
 
-#### Components
+#### 🌡️ Environmental Monitoring Device
+**Components:**
 - **Microcontroller**: Arduino-based processing unit
 - **Sensors**: 
   - Air Quality Sensor (PM2.5, PM10)
@@ -63,7 +101,7 @@ Our custom-built IoT sensor array designed for real-time environmental data coll
 - **Connectivity**: WiFi module for cloud data transmission
 - **Power**: Rechargeable battery with solar panel option
 
-#### Features
+**Features:**
 - **Real-time Data Collection**: Continuous environmental monitoring
 - **Local Display**: Instant readings on LCD screen
 - **Cloud Integration**: Automatic data upload to dashboard
@@ -71,46 +109,31 @@ Our custom-built IoT sensor array designed for real-time environmental data coll
 - **Low Power Consumption**: Extended battery life
 - **Modular Design**: Easy sensor replacement and upgrades
 
-#### Technical Specifications
-- **Operating Voltage**: 5V DC
-- **Data Transmission**: WiFi 802.11 b/g/n
-- **Measurement Range**: 
-  - Temperature: -40°C to +85°C
-  - Humidity: 0-100% RH
-  - PM2.5/PM10: 0-999 μg/m³
-- **Accuracy**: ±2% for temperature, ±3% for humidity
-- **Sampling Rate**: Every 30 seconds
-- **Deployment**: Indoor/Outdoor compatible
-
-### Compact Monitoring Unit
-
-A smaller, portable version for personal environmental monitoring:
-
-<!-- Paste your compact hardware image here directly -->
-<img src="data:image/jpeg;base64," alt="Hardware Model - Compact Unit" width="500" height="350" />
-
-<!-- Alternative: You can drag and drop the image here directly -->
-
-#### Features
+#### 📱 Compact Monitoring Unit
+**Features:**
 - **Portable Design**: Lightweight and battery-powered
 - **Personal Monitoring**: Individual air quality tracking
 - **Mobile App Integration**: Real-time data on smartphone
 - **Quick Setup**: Plug-and-play installation
 
-### Network Gateway Device
-
-Central hub for multiple sensor coordination:
-
-<!-- Paste your gateway hardware image here directly -->
-<img src="data:image/jpeg;base64," alt="Hardware Model - Gateway Hub" width="500" height="350" />
-
-<!-- Alternative: You can drag and drop the image here directly -->
-
-#### Capabilities
+#### 🌐 Network Gateway Device
+**Capabilities:**
 - **Multi-Sensor Management**: Coordinate up to 50 devices
 - **Data Aggregation**: Central processing and analytics
 - **Edge Computing**: Local AI processing capabilities
 - **Redundant Connectivity**: Multiple communication protocols
+
+#### ⚡ Technical Specifications
+| Parameter | Value | Range |
+|-----------|-------|-------|
+| **Operating Voltage** | 5V DC | 4.5V - 5.5V |
+| **Data Transmission** | WiFi 802.11 b/g/n | 2.4GHz |
+| **Temperature Range** | -40°C to +85°C | ±2% accuracy |
+| **Humidity Range** | 0-100% RH | ±3% accuracy |
+| **PM2.5/PM10 Range** | 0-999 μg/m³ | ±10% accuracy |
+| **Sampling Rate** | Every 30 seconds | Configurable |
+| **Power Consumption** | 150mA average | Sleep: 10μA |
+| **Deployment** | Indoor/Outdoor | IP65 rated |
 
 ---
 
